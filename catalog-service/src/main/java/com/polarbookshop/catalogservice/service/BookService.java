@@ -6,7 +6,6 @@ import com.polarbookshop.catalogservice.exceptions.BookAlreadyExistsException;
 import com.polarbookshop.catalogservice.exceptions.BookNotFoundException;
 import com.polarbookshop.catalogservice.mapper.BookMapper;
 import com.polarbookshop.catalogservice.repo.BookRepo;
-import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AccessLevel;
@@ -15,7 +14,6 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @FieldDefaults(makeFinal = true,level = AccessLevel.PRIVATE)
@@ -37,7 +35,6 @@ public class BookService {
         return bookRepo.findAll().stream().map(bookMapper::toResponse).toList();
     }
 
-    @Transactional
     public BookResponse create(BookRequest bookRequest) {
         if(bookRepo.existsByIsbn(bookRequest.isbn())){
             throw new BookAlreadyExistsException(bookRequest.isbn());
@@ -47,7 +44,6 @@ public class BookService {
         return bookMapper.toResponse(savedBook);
     }
 
-    @Transactional
     public BookResponse update(
             @NotBlank(message = "Book ISBN is Required")
             @Pattern(regexp="^([0-9]{10}|[0-9]{13})$")
@@ -62,7 +58,6 @@ public class BookService {
 
     }
 
-    @Transactional
     public void delete(
             @NotBlank(message = "Book ISBN is Required")
             @Pattern(regexp="^([0-9]{10}|[0-9]{13})$")

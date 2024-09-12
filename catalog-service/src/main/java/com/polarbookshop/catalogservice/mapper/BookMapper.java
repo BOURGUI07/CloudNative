@@ -16,6 +16,6 @@ public class BookMapper {
     }
 
     public BookResponse toResponse(Book book) {
-        return new BookResponse(book.getId(), book.getIsbn(),book.getTitle(),book.getAuthor(), book.getPrice());
+        return new BookResponse(book.getIsbn(),book.getTitle(),book.getAuthor(), book.getPrice());
     }
 }

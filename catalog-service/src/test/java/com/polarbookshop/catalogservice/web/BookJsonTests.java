@@ -29,14 +29,13 @@ public class BookJsonTests {
                 """;
         assertThat(json.parse(content))
                 .usingRecursiveComparison()
-                .isEqualTo(new Book(1,"0123456789", "Title", "Author", 10.5));
+                .isEqualTo(new Book("0123456789", "Title", "Author", 10.5));
     }
 
     @Test
     void testSerialization() throws IOException {
-        var book = new Book(1,"0123456789", "Title", "Author", 10.5);
+        var book = new Book("0123456789", "Title", "Author", 10.5);
         var jsonContent = json.write(book);
-        assertThat(jsonContent).extractingJsonPathNumberValue("@.id").isEqualTo(1);
         assertThat(jsonContent).extractingJsonPathStringValue("@.isbn").isEqualTo("0123456789");
         assertThat(jsonContent).extractingJsonPathStringValue("@.title").isEqualTo("Title");
         assertThat(jsonContent).extractingJsonPathStringValue("@.author").isEqualTo("Author");

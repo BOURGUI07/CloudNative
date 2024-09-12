@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CatalogServiceApplicationTests {
 	@Autowired
 	WebTestClient client;
-	BookResponse response = new BookResponse(1,"0123456789","title","author",10.5);
+	BookResponse response = new BookResponse("0123456789","title","author",10.5);
 	BookRequest request = new BookRequest("0123456789","title","author",10.5);
 
 	@Test
