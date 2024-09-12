@@ -30,7 +30,7 @@ jobs:
         uses: anchore/scan-action@v3
         id: scan
         with:
-          path: "${{ github.workspace }}/catalog-service"
+          path: "${{ github.workspace }}/native/catalog-service"
           fail-build: false
           severity-cutoff: high
 
@@ -38,6 +38,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: success() || failure()
         with:
-          sarif_file: ${{ github.workspace }}/catalog-service/scan-results.sarif
+          sarif_file: ${{ github.workspace }}/native/catalog-service/scan-results.sarif
 
 
