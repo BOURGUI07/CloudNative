@@ -21,9 +21,9 @@ jobs:
           java-version: 22
           cache: maven
 
-      - name: Build, unit tests and integration tests
+      - name: Build, unit tests, and integration tests
         run: |
-          cd catalog-service
+          cd native/catalog-service
           mvn clean install
 
       - name: Code vulnerability scanning
@@ -34,10 +34,15 @@ jobs:
           fail-build: false
           severity-cutoff: high
 
+      - name: List files for debugging
+        run: |
+          ls -al ${GITHUB_WORKSPACE}/native/catalog-service
+
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
         if: success() || failure()
         with:
           sarif_file: ${{ github.workspace }}/native/catalog-service/scan-results.sarif
+
 
 
