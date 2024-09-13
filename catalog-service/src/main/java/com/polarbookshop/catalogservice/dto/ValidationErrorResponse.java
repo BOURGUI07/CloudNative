@@ -6,6 +6,7 @@ import java.util.Map;
 
 public record ValidationErrorResponse(
         String apiPath,
+        String httpMethod,
         HttpStatus status,
         int statusCode,
         Map<String,String> message,

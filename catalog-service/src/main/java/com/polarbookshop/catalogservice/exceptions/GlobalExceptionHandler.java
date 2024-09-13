@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 
 import java.util.HashMap;
@@ -23,7 +24,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> handleNotFoundException(BookNotFoundException ex, WebRequest request) {
         var status = HttpStatus.NOT_FOUND;
-        var errorResponse = new ErrorResponse(request.getDescription(false),status, status.value(), ex.getMessage(),System.currentTimeMillis());
+        var errorResponse = new ErrorResponse(request.getDescription(false),((ServletWebRequest)request).getHttpMethod().name(),status, status.value(), ex.getMessage(),System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, status);
     }
 
@@ -31,7 +32,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ErrorResponse> handleAlreadyExistsException(BookAlreadyExistsException ex, WebRequest request) {
         var status = HttpStatus.CONFLICT;
-        var errorResponse = new ErrorResponse(request.getDescription(false),status, status.value(), ex.getMessage(),System.currentTimeMillis());
+        var errorResponse = new ErrorResponse(request.getDescription(false),((ServletWebRequest)request).getHttpMethod().name(),status, status.value(), ex.getMessage(),System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, status);
     }
 
@@ -41,7 +42,7 @@ public class GlobalExceptionHandler {
         var status = HttpStatus.BAD_REQUEST;
         var map = new HashMap<String, String>();
         ex.getBindingResult().getAllErrors().forEach(x->map.put(((FieldError)x).getField(),x.getDefaultMessage()));
-        var errorResponse = new ValidationErrorResponse(request.getDescription(false),status, status.value(), map,System.currentTimeMillis());
+        var errorResponse = new ValidationErrorResponse(request.getDescription(false),((ServletWebRequest)request).getHttpMethod().name(),status, status.value(), map,System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, status);
     }
 
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex, WebRequest request) {
         var status = HttpStatus.INTERNAL_SERVER_ERROR;
-        var errorResponse = new ErrorResponse(request.getDescription(false),status, status.value(), ex.getMessage(),System.currentTimeMillis());
+        var errorResponse = new ErrorResponse(request.getDescription(false),((ServletWebRequest)request).getHttpMethod().name(),status, status.value(), ex.getMessage(),System.currentTimeMillis());
         return new ResponseEntity<>(errorResponse, status);
     }
 }

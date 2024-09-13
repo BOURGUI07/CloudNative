@@ -11,4 +11,5 @@ public interface BookRepo {
     void deleteByIsbn(String isbn);
     Book save(Book book);
     List<Book> findAll();
+    void saveAll(Book... books);
 }

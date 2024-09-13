@@ -21,7 +21,6 @@ import java.util.List;
 public class BookService {
     BookRepo bookRepo;
     BookMapper bookMapper;
-
     public BookResponse getByIsbn(
             @NotBlank(message = "Book ISBN is Required")
             @Pattern(regexp="^([0-9]{10}|[0-9]{13})$")

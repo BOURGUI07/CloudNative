@@ -3,6 +3,7 @@ package com.polarbookshop.catalogservice.repo;
 import com.polarbookshop.catalogservice.domain.Book;
 import org.springframework.stereotype.Repository;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,5 +36,10 @@ public class InMemoryBookRepo implements BookRepo {
     @Override
     public List<Book> findAll() {
         return books.values().stream().toList();
+    }
+
+    @Override
+    public void saveAll(Book... books) {
+        Arrays.stream(books).forEach(this::save);
     }
 }
