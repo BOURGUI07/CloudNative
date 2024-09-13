@@ -7,9 +7,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -20,8 +21,10 @@ public class BookDataLoader {
 
     @EventListener(ApplicationReadyEvent.class)
     public void loadBookTestData(){
-        var book1 = new Book("0123456789", "title1", "author1", 10.5);
-        var book2 = new Book("0123456788", "title2", "author2", 12.5);
-        bookRepo.saveAll(book1, book2);
+        bookRepo.deleteAll();
+        var book1 = new Book(null,"0123456789", "title1", "author1", 10.5,null,null,null);
+        var book2 = new Book(null,"0123456788", "title2", "author2", 12.5,null,null,null);
+        bookRepo.save(book1);
+        bookRepo.save(book2);
     }
 }

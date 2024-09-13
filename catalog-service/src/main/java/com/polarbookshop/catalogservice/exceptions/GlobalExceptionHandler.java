@@ -36,6 +36,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, status);
     }
 
+    @ExceptionHandler(CustomOptimisticLockingFailureException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleOptimicticLockingFailure(CustomOptimisticLockingFailureException ex, WebRequest request) {
+        var status = HttpStatus.CONFLICT;
+        var errorResponse = new ErrorResponse(request.getDescription(false),((ServletWebRequest)request).getHttpMethod().name(),status, status.value(), ex.getMessage(),System.currentTimeMillis());
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ValidationErrorResponse> handleValidationException(MethodArgumentNotValidException ex, WebRequest request) {
