@@ -1,0 +1,53 @@
+
+services:
+
+  catalog-service:
+    depends_on:
+      polar-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    image: "catalog-service"
+    ports:
+      - 9002:9001
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://polar-postgres:5432/polardb_catalog
+      - LOGGING_LEVEL_ROOT=DEBUG
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
+    networks:
+      - polar-network
+
+  config-service:
+    image: "config-service"
+    container_name: "config-service"
+    ports:
+      - 8888:8888
+    networks:
+      - polar-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+
+  polar-postgres:
+    image: "postgres:14.8"
+    container_name: "polar-postgres"
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=polardb_catalog
+    networks:
+      - polar-network
+
+
+networks:
+  polar-network:
+    driver: bridge
