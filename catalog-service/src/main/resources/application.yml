@@ -27,6 +27,8 @@ spring:
     user: user
     password: password
     url: jdbc:postgresql://localhost:5432/polardb_catalog
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
 
 server:
   port: 9001
@@ -36,6 +38,7 @@ server:
     threads:
       max: 50
       min-spare: 5
+  shutdown: graceful
 
 
 
