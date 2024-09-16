@@ -28,6 +28,34 @@ services:
       timeout: 10s
       retries: 5
 
+  order-service:
+    image: "order-service"
+    depends_on:
+      polar-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
+    ports:
+      - 9002:9002
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    environment:
+      - POLAR_CATALOG_SERVICE_URI=http://catalog-service:9001
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_R2DBC_URL=r2dbc:postgresql://polar-postgres:5432/polardb_order
+      - SPRING_FLYWAY_URL=jdbc:postgresql://polar-postgres:5432/polardb_order
+      - LOGGING_LEVEL_ROOT=DEBUG
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
+    networks:
+      - polar-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9002/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   config-service:
     image: "config-service"
     ports:
