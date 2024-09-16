@@ -25,7 +25,7 @@ public class Order{
     Double bookPrice;
     Integer quantity;
     OrderStatus status = OrderStatus.REJECTED;
-    @CreatedBy
+    @CreatedDate
     Instant createdDate;
     @LastModifiedDate
     Instant lastModifiedDate;
