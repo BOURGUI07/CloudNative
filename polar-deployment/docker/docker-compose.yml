@@ -1,5 +1,16 @@
 
 services:
+  polar-rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: polar-rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - polar-network
+    volumes:
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+
 
   polar-redis:
     image: "redis:7.0"
@@ -8,19 +19,15 @@ services:
       - 6379:6379
     networks:
       - polar-network
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+
 
 
   edge-service:
     depends_on:
-      polar-redis:
-        condition: service_healthy
-      config-service:
-        condition: service_healthy
+      - polar-redis
+      - config-service
+      - catalog-service
+      - order-service
     image: "edge-service"
     ports:
       - 9000:9000
@@ -35,20 +42,13 @@ services:
       - SPRING_DATA_REDIS_HOST=polar-redis
     networks:
       - polar-network
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9000/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 
   catalog-service:
     image: "catalog-service"
     depends_on:
-      polar-postgres:
-        condition: service_healthy
-      config-service:
-        condition: service_healthy
+      - polar-postgres
+      - config-service
     ports:
       - 9001:9001
     deploy:
@@ -63,19 +63,13 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
     networks:
       - polar-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9001/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+
 
   order-service:
     image: "order-service"
     depends_on:
-      polar-postgres:
-        condition: service_healthy
-      config-service:
-        condition: service_healthy
+      - polar-postgres
+      - config-service
     ports:
       - 9002:9002
     deploy:
@@ -91,11 +85,6 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
     networks:
       - polar-network
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9002/actuator/health || exit 1" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   config-service:
     image: "config-service"
@@ -103,11 +92,6 @@ services:
       - 8888:8888
     networks:
       - polar-network
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
-      interval: 1m
-      timeout: 3s
-      retries: 3
 
   polar-postgres:
     image: "postgres:14.12"
@@ -120,11 +104,6 @@ services:
       - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - polar-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d polardb_catalog"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
 networks:
   polar-network:
