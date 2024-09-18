@@ -50,6 +50,7 @@ services:
     environment:
       - CATALOG_SERVICE_URL=http://catalog-service:9001
       - ORDER_SERVICE_URL=http://order-service:9002
+      - SPA_URL=http://polar-ui:9004
       - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
       - SPRING_DATA_REDIS_HOST=polar-redis
     networks:
@@ -161,6 +162,31 @@ services:
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
       - SPRING_RABBITMQ_HOST=polar-rabbitmq
+
+  polar-keycloak:
+    image: quay.io/keycloak/keycloak:19.0
+    container_name: "polar-keycloak"
+    command: start-dev --import-realm
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import
+    environment:
+      - KEYCLOAK_ADMIN=user
+      - KEYCLOAK_ADMIN_PASSWORD=password
+    ports:
+      - 8080:8080
+    networks:
+      - polar-network
+
+  polar-ui:
+    image: "ghcr.io/polarbookshop/polar-ui:v1"
+    container_name: "polar-ui"
+    ports:
+      - 9004:9004
+    networks:
+      - polar-network
+    environment:
+      - PORT= 9004
+
 
 networks:
   polar-network:
