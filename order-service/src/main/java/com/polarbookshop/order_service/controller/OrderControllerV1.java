@@ -31,4 +31,9 @@ public class OrderControllerV1 {
     public ResponseEntity<Mono<OrderResponse>> submitOrder(@Valid @RequestBody OrderRequest orderRequest) {
         return ResponseEntity.ok(orderService.submitOrder(orderRequest));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Mono<OrderResponse>> getOrderById(@PathVariable Integer id) {
+        return ResponseEntity.ok(orderService.findById(id));
+    }
 }

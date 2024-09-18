@@ -10,6 +10,11 @@ services:
       - polar-network
     volumes:
       - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
   polar-redis:
@@ -19,15 +24,22 @@ services:
       - 6379:6379
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
 
   edge-service:
     depends_on:
-      - polar-redis
-      - config-service
-      - catalog-service
-      - order-service
+      polar-redis:
+        condition: service_healthy
+      catalog-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
     image: "edge-service"
     ports:
       - 9000:9000
@@ -47,8 +59,10 @@ services:
   catalog-service:
     image: "catalog-service"
     depends_on:
-      - polar-postgres
-      - config-service
+      polar-postgres:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
     ports:
       - 9001:9001
     deploy:
@@ -63,13 +77,22 @@ services:
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9001/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
   order-service:
     image: "order-service"
     depends_on:
-      - polar-postgres
-      - config-service
+      polar-postgres:
+        condition: service_healthy
+      polar-rabbitmq:
+        condition: service_healthy
+      config-service:
+        condition: service_healthy
     ports:
       - 9002:9002
     deploy:
@@ -83,8 +106,16 @@ services:
       - SPRING_FLYWAY_URL=jdbc:postgresql://polar-postgres:5432/polardb_order
       - LOGGING_LEVEL_ROOT=DEBUG
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK=DEBUG
+      - SPRING_RABBITMQ_HOST=polar-rabbitmq
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9002/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
 
   config-service:
     image: "config-service"
@@ -92,6 +123,13 @@ services:
       - 8888:8888
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 1m
+      timeout: 3s
+      retries: 3
+
+
 
   polar-postgres:
     image: "postgres:14.12"
@@ -104,6 +142,25 @@ services:
       - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+  dispatcher-service:
+    depends_on:
+      polar-rabbitmq:
+        condition: service_healthy
+    image: "dispatcher-service"
+    ports:
+      - 9003:9003
+    networks:
+      - polar-network
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - SPRING_RABBITMQ_HOST=polar-rabbitmq
 
 networks:
   polar-network:

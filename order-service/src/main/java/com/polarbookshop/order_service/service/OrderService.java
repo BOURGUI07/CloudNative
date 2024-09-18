@@ -20,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.awt.print.Book;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
+
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true,level= AccessLevel.PRIVATE)
@@ -38,21 +42,30 @@ public class OrderService {
                 .map(book -> submitAcceptedOrder(book, orderRequest.quantity()))
                 .defaultIfEmpty(submitRejectedOrder(orderRequest))
                 .flatMap(orderRepo::save)
+                .doOnNext(this::publishOrderAcceptedEvent)
                 .map(orderMapper::toResponse)
-                .doOnNext(this::publishOrderAcceptedEvent);
+                .doOnNext(response->log.info("order response status is: {}", response.status()));
+    }
 
+    public Mono<OrderResponse> findById(Integer orderId) {
+        return orderRepo.findById(orderId).map(orderMapper::toResponse);
     }
 
     public Flux<OrderResponse> consumeDispatchedOrderEvent(Flux<DispatchedOrderMessage> flux) {
         return flux.flatMap(message-> orderRepo.findById(message.orderId()))
+                .doOnNext(message -> log.info("CONSUMING DISPATCHED ORDER MESSAGE WITH STATUS: {}",message.getStatus()))
                 .map(this::buildDispatchedOrder)
+                .doOnNext(order -> log.info("The Result of buildDispatchedOrder is: {}",order.getStatus()))
                 .flatMap(orderRepo::save)
+                .doOnNext(savedOrder -> log.info("The Result of Saved Dispatched Order is: {}",savedOrder.getStatus()))
                 .map(orderMapper::toResponse);
 
     }
 
     private Order buildDispatchedOrder(Order order) {
-        return order.setStatus(OrderStatus.DISPATCHED);
+        log.info("Setting The Order Status to DISPATCHED");
+        return new Order(order.getId(), order.getBookIsbn(), order.getBookName(), order.getBookPrice(),
+                order.getQuantity(),OrderStatus.DISPATCHED,order.getCreatedDate(),order.getLastModifiedDate(),order.getVersion());
     }
 
     public static Order submitRejectedOrder(OrderRequest orderRequest) {
@@ -68,13 +81,15 @@ public class OrderService {
                 .setBookIsbn(book.isbn());
     }
 
-    private void publishOrderAcceptedEvent(OrderResponse orderResponse) {
-        if(!orderResponse.status().equals(OrderStatus.ACCEPTED)) {
+    private void publishOrderAcceptedEvent(Order order) {
+        if(!order.getStatus().equals(OrderStatus.ACCEPTED)) {
             return;
         }
-        var acceptedOrder = new AcceptedOrderMessage(orderResponse.orderId());
-        log.info("Sending Accepted Order Event with id: {}", orderResponse.orderId());
+        var acceptedOrder = new AcceptedOrderMessage(order.getId());
+        log.info("Sending Accepted Order Event with id: {}", order.getId());
         var result = streamBridge.send("acceptOrder-out-0", acceptedOrder);
-        log.info("Result for sending data for order with id {}: {}", orderResponse.orderId(), result);
+        log.info("Result for sending data for order with id {}: {}", order.getId(), result);
     }
+
+
 }
