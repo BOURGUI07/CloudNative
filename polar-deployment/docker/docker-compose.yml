@@ -36,6 +36,10 @@ services:
     depends_on:
       polar-redis:
         condition: service_healthy
+      polar-keycloak:
+        condition: service_healthy
+      polar-ui:
+        condition: service_started
       catalog-service:
         condition: service_healthy
       order-service:
@@ -53,6 +57,7 @@ services:
       - SPA_URL=http://polar-ui:9004
       - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
       - SPRING_DATA_REDIS_HOST=polar-redis
+      - SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI=http://host.docker.internal:8080/realms/PolarBookshop
     networks:
       - polar-network
 
@@ -176,6 +181,13 @@ services:
       - 8080:8080
     networks:
       - polar-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/realms/PolarBookshop" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
 
   polar-ui:
     image: "ghcr.io/polarbookshop/polar-ui:v1"
@@ -185,7 +197,14 @@ services:
     networks:
       - polar-network
     environment:
-      - PORT= 9004
+      - PORT=9004
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9004" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 180s
+
 
 
 networks:
